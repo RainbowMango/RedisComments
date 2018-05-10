@@ -99,7 +99,7 @@ quicklist *quicklistCreate(void) {
     quicklist->len = 0;
     quicklist->count = 0;
     quicklist->compress = 0;
-    quicklist->fill = -2;
+    quicklist->fill = -2; //注意fill值初始化为-2，意思是每个ziplist大小不超过8kb
     return quicklist;
 }
 
@@ -117,7 +117,7 @@ void quicklistSetCompressDepth(quicklist *quicklist, int compress) {
 void quicklistSetFill(quicklist *quicklist, int fill) {
     if (fill > FILL_MAX) {
         fill = FILL_MAX;
-    } else if (fill < -5) {
+    } else if (fill < -5) { //TODO:不理解为什么fill<-5时会直接使用-5, 而不是使用参数值
         fill = -5;
     }
     quicklist->fill = fill;
