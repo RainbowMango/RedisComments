@@ -41,11 +41,11 @@
  * -------------------------------------------------------------------------- */
 
 /* This structure represents a module inside the system. */
-struct RedisModule {
-    void *handle;   /* Module dlopen() handle. */
-    char *name;     /* Module name. */
-    int ver;        /* Module version. We use just progressive integers. */
-    int apiver;     /* Module API version as requested during initialization.*/
+struct RedisModule { //模块数据结构，存储一个模块的总体信息
+    void *handle;   /* Module dlopen() handle. */  //动态链接库句柄
+    char *name;     /* Module name. */ //模块名字
+    int ver;        /* Module version. We use just progressive integers. */ //模块版本
+    int apiver;     /* Module API version as requested during initialization.*/ //模块API版本
     list *types;    /* Module data types. */
 };
 typedef struct RedisModule RedisModule;
@@ -3927,7 +3927,7 @@ void moduleUnregisterCommands(struct RedisModule *module) {
 
 /* Load a module and initialize it. On success C_OK is returned, otherwise
  * C_ERR is returned. */
-int moduleLoad(const char *path, void **module_argv, int module_argc) {
+int moduleLoad(const char *path, void **module_argv, int module_argc) { //通过dlopen加载动态链接库，将动态链接库中的函数解析出来供后续调用
     int (*onload)(void *, void **, int);
     void *handle;
     RedisModuleCtx ctx = REDISMODULE_CTX_INIT;
@@ -3937,8 +3937,8 @@ int moduleLoad(const char *path, void **module_argv, int module_argc) {
         serverLog(LL_WARNING, "Module %s failed to load: %s", path, dlerror());
         return C_ERR;
     }
-    onload = (int (*)(void *, void **, int))(unsigned long) dlsym(handle,"RedisModule_OnLoad");
-    if (onload == NULL) {
+    onload = (int (*)(void *, void **, int))(unsigned long) dlsym(handle,"RedisModule_OnLoad"); //dlsym(): 跟据动态链接库句柄获取指定符号的地址，可以是函数地址也可以是变量地址
+    if (onload == NULL) { //这里没有关闭动态链接库句柄，新版本已解决
         serverLog(LL_WARNING,
             "Module %s does not export RedisModule_OnLoad() "
             "symbol. Module not loaded.",path);
