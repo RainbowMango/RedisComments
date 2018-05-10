@@ -368,11 +368,11 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
 
     if (d->ht[0].used == 0 && d->ht[1].used == 0) return NULL;
 
-    if (dictIsRehashing(d)) _dictRehashStep(d);
-    h = dictHashKey(d, key);
+    if (dictIsRehashing(d)) _dictRehashStep(d); //如果当前字典正在rehash，则在访问该字典时强制做一次渐近hash
+    h = dictHashKey(d, key); //将key值进行hash运算，得到hash值，方便后面确定hash表位置
 
     for (table = 0; table <= 1; table++) {
-        idx = h & d->ht[table].sizemask;
+        idx = h & d->ht[table].sizemask; //将key的hash值与hash size 与运算得到key在hash表中的位置
         he = d->ht[table].table[idx];
         prevHe = NULL;
         while(he) {
@@ -383,7 +383,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
                 else
                     d->ht[table].table[idx] = he->next;
                 if (!nofree) {
-                    dictFreeKey(d, he);
+                    dictFreeKey(d, he);//TODO:很可能此处将key值引用计算-1
                     dictFreeVal(d, he);
                     zfree(he);
                 }
@@ -393,7 +393,7 @@ static dictEntry *dictGenericDelete(dict *d, const void *key, int nofree) {
             prevHe = he;
             he = he->next;
         }
-        if (!dictIsRehashing(d)) break;
+        if (!dictIsRehashing(d)) break; //如果hash表当前没有在做re-hash，则不必再查找ht[1]
     }
     return NULL; /* not found */
 }

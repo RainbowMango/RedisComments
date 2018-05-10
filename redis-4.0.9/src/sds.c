@@ -55,18 +55,18 @@ static inline int sdsHdrSize(char type) {
     return 0;
 }
 
-static inline char sdsReqType(size_t string_size) {
-    if (string_size < 1<<5)
+static inline char sdsReqType(size_t string_size) {//跟据size判断类型，往往用于sds创建，跟据类型分配合适大小的空间，以节省内存
+    if (string_size < 1<<5)  //小于16
         return SDS_TYPE_5;
-    if (string_size < 1<<8)
+    if (string_size < 1<<8)  //小于256 即一个字节即可存放长度信息
         return SDS_TYPE_8;
-    if (string_size < 1<<16)
+    if (string_size < 1<<16) //小于65536 即两个字节即可存放长度信息
         return SDS_TYPE_16;
-#if (LONG_MAX == LLONG_MAX)
+#if (LONG_MAX == LLONG_MAX)  //4294967296 即4个字节即可存放长度信息
     if (string_size < 1ll<<32)
         return SDS_TYPE_32;
 #endif
-    return SDS_TYPE_64;
+    return SDS_TYPE_64;      //8个字节即可存放
 }
 
 /* Create a new sds string with the content specified by the 'init' pointer
@@ -91,12 +91,12 @@ sds sdsnewlen(const void *init, size_t initlen) {
     int hdrlen = sdsHdrSize(type);
     unsigned char *fp; /* flags pointer. */
 
-    sh = s_malloc(hdrlen+initlen+1);
+    sh = s_malloc(hdrlen+initlen+1); //sds精彩之处就是申请内存时将head和真实数据存放区一并申请了
     if (!init)
         memset(sh, 0, hdrlen+initlen+1);
-    if (sh == NULL) return NULL;
+    if (sh == NULL) return NULL; //这个判断要放在上面...
     s = (char*)sh+hdrlen;
-    fp = ((unsigned char*)s)-1;
+    fp = ((unsigned char*)s)-1; //神操作，指向头部的flag
     switch(type) {
         case SDS_TYPE_5: {
             *fp = type | (initlen << SDS_TYPE_BITS);
@@ -802,23 +802,23 @@ int sdscmp(const sds s1, const sds s2) {
  * requires length arguments. sdssplit() is just the
  * same function but for zero-terminated strings.
  */
-sds *sdssplitlen(const char *s, ssize_t len, const char *sep, int seplen, int *count) {
-    int elements = 0, slots = 5;
-    long start = 0, j;
-    sds *tokens;
+sds *sdssplitlen(const char *s, ssize_t len, const char *sep, int seplen, int *count) { //一款非常高效的字符串拆分函数，跟据分隔字符或字符串将字符串分隔成多个字符串
+    int elements = 0, slots = 5; //elements为拆分出来的字符串个数，slots为初始可存放的最大子串个数，可以动态扩展
+    long start = 0, j; //start为下个元素起始位置， j为遍历s时行走的步数
+    sds *tokens; //一个字符串指针数组. 元素个数由slots控制。 tokens[0]、tokens[1]...每个元素指向拆分后的字符子串
 
     if (seplen < 1 || len < 0) return NULL;
 
     tokens = s_malloc(sizeof(sds)*slots);
     if (tokens == NULL) return NULL;
 
-    if (len == 0) {
+    if (len == 0) { //按照函数注释所说，0字节长度字符串会返回NULL, 但此处不是，已提交PP
         *count = 0;
         return tokens;
     }
-    for (j = 0; j < (len-(seplen-1)); j++) {
+    for (j = 0; j < (len-(seplen-1)); j++) { //一遍循环找出所有分隔符，每找到一个将分隔符前面的子串挂到tokens[elements]
         /* make sure there is room for the next element and the final one */
-        if (slots < elements+2) {
+        if (slots < elements+2) { //确保预分配的字符串指针数组空间足够存放两个子串指针，如果不够将原空间扩大2倍
             sds *newtokens;
 
             slots *= 2;
@@ -832,11 +832,11 @@ sds *sdssplitlen(const char *s, ssize_t len, const char *sep, int seplen, int *c
             if (tokens[elements] == NULL) goto cleanup;
             elements++;
             start = j+seplen;
-            j = j+seplen-1; /* skip the separator */
+            j = j+seplen-1; /* skip the separator */ //不管分隔符长度为多少，总是跳过(长度-1)，剩下的一个留给循环跳过，
         }
     }
     /* Add the final element. We are sure there is room in the tokens array. */
-    tokens[elements] = sdsnewlen(s+start,len-start);
+    tokens[elements] = sdsnewlen(s+start,len-start); //出循环后start指向最后一个分隔符之后，也即最后一个元素
     if (tokens[elements] == NULL) goto cleanup;
     elements++;
     *count = elements;

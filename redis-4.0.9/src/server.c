@@ -58,7 +58,7 @@
 
 /* Our shared "common" objects */
 
-struct sharedObjectsStruct shared;
+struct sharedObjectsStruct shared; //全局共享对象
 
 /* Global vars that are actually used as constants. The following double
  * values are used for double on-disk serialization, and are initialized
@@ -1320,7 +1320,7 @@ void createSharedObjects(void) {
     shared.rpop = createStringObject("RPOP",4);
     shared.lpop = createStringObject("LPOP",4);
     shared.lpush = createStringObject("LPUSH",5);
-    for (j = 0; j < OBJ_SHARED_INTEGERS; j++) {
+    for (j = 0; j < OBJ_SHARED_INTEGERS; j++) { //预创建整数类型共享对象，之所以不创建字符串型，因为使用共享对象时需要对比，字符串比较时间复杂度O(n)无法接受
         shared.integers[j] =
             makeObjectShared(createObject(OBJ_STRING,(void*)(long)j));
         shared.integers[j]->encoding = OBJ_ENCODING_INT;
@@ -1838,7 +1838,7 @@ void initServer(void) {
 
     createSharedObjects();
     adjustOpenFilesLimit();
-    server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);
+    server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);//创建事件池，除用户配置外额外增加系统自用
     if (server.el == NULL) {
         serverLog(LL_WARNING,
             "Failed creating the event loop. Error message: '%s'",

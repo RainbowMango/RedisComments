@@ -115,24 +115,24 @@ robj *createEmbeddedStringObject(const char *ptr, size_t len) {
  * we allocate as EMBSTR will still fit into the 64 byte arena of jemalloc. */
 #define OBJ_ENCODING_EMBSTR_SIZE_LIMIT 44
 robj *createStringObject(const char *ptr, size_t len) {
-    if (len <= OBJ_ENCODING_EMBSTR_SIZE_LIMIT)
+    if (len <= OBJ_ENCODING_EMBSTR_SIZE_LIMIT) //创建字符串时，如果是小串则使用embstr编码，可以提高内存分配效率，具体需要看jemalloc机制
         return createEmbeddedStringObject(ptr,len);
     else
         return createRawStringObject(ptr,len);
 }
 
-robj *createStringObjectFromLongLong(long long value) {
+robj *createStringObjectFromLongLong(long long value) {//跟据数值创建对象时原则: [0-10000)使用共享对象、[LONG_INT-LONG-MAX]时使用int、其他使用sds
     robj *o;
-    if (value >= 0 && value < OBJ_SHARED_INTEGERS) {
-        incrRefCount(shared.integers[value]);
+    if (value >= 0 && value < OBJ_SHARED_INTEGERS) { //如果长整数值在[0, 10000)之间，则直接使用共享对象
+        incrRefCount(shared.integers[value]); //这步调用多余，因为共享对象引计数已经是最大值了
         o = shared.integers[value];
     } else {
-        if (value >= LONG_MIN && value <= LONG_MAX) {
+        if (value >= LONG_MIN && value <= LONG_MAX) { //如果该数能够用长整数表示，则使用int编码
             o = createObject(OBJ_STRING, NULL);
             o->encoding = OBJ_ENCODING_INT;
-            o->ptr = (void*)((long)value);
+            o->ptr = (void*)((long)value); //风骚的用法，直接把整数强转成内存地址，取值时不能用*o->ptr, 要再强转成long
         } else {
-            o = createObject(OBJ_STRING,sdsfromlonglong(value));
+            o = createObject(OBJ_STRING,sdsfromlonglong(value)); //如果长整型包不住就用sds存
         }
     }
     return o;
@@ -303,11 +303,11 @@ void freeModuleObject(robj *o) {
     zfree(mv);
 }
 
-void incrRefCount(robj *o) {
+void incrRefCount(robj *o) {//增加引用计数，如果不是共享对象，引数计数+1
     if (o->refcount != OBJ_SHARED_REFCOUNT) o->refcount++;
 }
 
-void decrRefCount(robj *o) {
+void decrRefCount(robj *o) { //引用计数--，如果引用计数变为0时，则释放内存
     if (o->refcount == 1) {
         switch(o->type) {
         case OBJ_STRING: freeStringObject(o); break;
@@ -321,7 +321,7 @@ void decrRefCount(robj *o) {
         zfree(o);
     } else {
         if (o->refcount <= 0) serverPanic("decrRefCount against refcount <= 0");
-        if (o->refcount != OBJ_SHARED_REFCOUNT) o->refcount--;
+        if (o->refcount != OBJ_SHARED_REFCOUNT) o->refcount--;//共享对象的引用计数始终为最大值，如果对象为共享对象，则不执行--
     }
 }
 

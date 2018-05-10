@@ -73,7 +73,7 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
     eventLoop->timeEventHead = NULL;
     eventLoop->timeEventNextId = 0;
     eventLoop->stop = 0;
-    eventLoop->maxfd = -1;
+    eventLoop->maxfd = -1; //初始化时所有事件都不监听
     eventLoop->beforesleep = NULL;
     eventLoop->aftersleep = NULL;
     if (aeApiCreate(eventLoop) == -1) goto err;

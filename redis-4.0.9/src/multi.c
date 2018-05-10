@@ -111,7 +111,7 @@ void execCommandPropagateMulti(client *c) {
     decrRefCount(multistring);
 }
 
-void execCommand(client *c) {
+void execCommand(client *c) {//EXEC命令处理函数
     int j;
     robj **orig_argv;
     int orig_argc;
@@ -130,7 +130,7 @@ void execCommand(client *c) {
      * A failed EXEC in the first case returns a multi bulk nil object
      * (technically it is not an error but a special behavior), while
      * in the second an EXECABORT error is returned. */
-    if (c->flags & (CLIENT_DIRTY_CAS|CLIENT_DIRTY_EXEC)) {
+    if (c->flags & (CLIENT_DIRTY_CAS|CLIENT_DIRTY_EXEC)) { //执行事务命令前先检查是否需要中断，比如监视的key被修改了则立即中断
         addReply(c, c->flags & CLIENT_DIRTY_EXEC ? shared.execaborterr :
                                                   shared.nullmultibulk);
         discardTransaction(c);
@@ -138,7 +138,7 @@ void execCommand(client *c) {
     }
 
     /* Exec all the queued commands */
-    unwatchAllKeys(c); /* Unwatch ASAP otherwise we'll waste CPU cycles */
+    unwatchAllKeys(c); /* Unwatch ASAP otherwise we'll waste CPU cycles *///真正执行命令时一定要先取消监视，否则命令中有可能修改所监视的key...
     orig_argv = c->argv;
     orig_argc = c->argc;
     orig_cmd = c->cmd;
@@ -168,7 +168,7 @@ void execCommand(client *c) {
     c->argv = orig_argv;
     c->argc = orig_argc;
     c->cmd = orig_cmd;
-    discardTransaction(c);
+    discardTransaction(c); //事务中命令执行完毕后需要将事务状态清理掉，跟执行discard命令动作一致，所以就这么discard了
 
     /* Make sure the EXEC command will be propagated as well if MULTI
      * was already propagated. */
@@ -213,7 +213,7 @@ typedef struct watchedKey {
     redisDb *db;
 } watchedKey;
 
-/* Watch for the specified key */
+/* Watch for the specified key *///监视一个key，需要记录在客户端结构体中的watched_keys列表，也要记录在DB结构体中的watched_keys字典中
 void watchForKey(client *c, robj *key) {
     list *clients = NULL;
     listIter li;
@@ -222,36 +222,36 @@ void watchForKey(client *c, robj *key) {
 
     /* Check if we are already watching for this key */
     listRewind(c->watched_keys,&li);
-    while((ln = listNext(&li))) {
+    while((ln = listNext(&li))) { //先检查该key是否已经存在于客户端监视列表中，如是则立即跳出
         wk = listNodeValue(ln);
         if (wk->db == c->db && equalStringObjects(key,wk->key))
             return; /* Key already watched */
     }
     /* This key is not already watched in this DB. Let's add it */
-    clients = dictFetchValue(c->db->watched_keys,key);
-    if (!clients) {
+    clients = dictFetchValue(c->db->watched_keys,key);//获取客户端当前选择的数据库中监视该key的所有客户端列表
+    if (!clients) {//如果客户端当前选择的数据库中没有客户端监视该key，则把该key加入字典，value值为空链表，只有一个头结点
         clients = listCreate();
         dictAdd(c->db->watched_keys,key,clients);
-        incrRefCount(key);
+        incrRefCount(key);//注意此处将key引用计数+1，因为该key初次加放DB结构体中的监视字典。 
     }
-    listAddNodeTail(clients,c);
+    listAddNodeTail(clients,c);//将前client加入DB结构体中监视字典的value中
     /* Add the new key to the list of keys watched by this client */
     wk = zmalloc(sizeof(*wk));
     wk->key = key;
     wk->db = c->db;
     incrRefCount(key);
-    listAddNodeTail(c->watched_keys,wk);
+    listAddNodeTail(c->watched_keys,wk);//将该key存放客户端结构体中监视列表
 }
 
 /* Unwatch all the keys watched by this client. To clean the EXEC dirty
  * flag is up to the caller. */
-void unwatchAllKeys(client *c) {
+void unwatchAllKeys(client *c) {//与监视key相反，需要删除客户端记录的watched_keys列表，也要删除DB结构体中的watched_keys字典value
     listIter li;
     listNode *ln;
 
     if (listLength(c->watched_keys) == 0) return;
     listRewind(c->watched_keys,&li);
-    while((ln = listNext(&li))) {
+    while((ln = listNext(&li))) {//遍历客户端watched_keys列表，每个元素指明了key值和DB，据此可以方便的将DB中的字典项删除
         list *clients;
         watchedKey *wk;
 
@@ -260,10 +260,10 @@ void unwatchAllKeys(client *c) {
         wk = listNodeValue(ln);
         clients = dictFetchValue(wk->db->watched_keys, wk->key);
         serverAssertWithInfo(c,NULL,clients != NULL);
-        listDelNode(clients,listSearchKey(clients,c));
+        listDelNode(clients,listSearchKey(clients,c));//将客户端从DB结构体watched_keys字典value链表中删除
         /* Kill the entry at all if this was the only client */
-        if (listLength(clients) == 0)
-            dictDelete(wk->db->watched_keys, wk->key);
+        if (listLength(clients) == 0)//这点非常重要，DB的watched_keys字典中如果value值为空链表，则将key值一并移出
+            dictDelete(wk->db->watched_keys, wk->key); //TODO:这里好像是没有将key的引用计数减1，发生内存泄露
         /* Remove this watched key from the client->watched list */
         listDelNode(c->watched_keys,ln);
         decrRefCount(wk->key);
@@ -273,19 +273,19 @@ void unwatchAllKeys(client *c) {
 
 /* "Touch" a key, so that if this key is being WATCHed by some client the
  * next EXEC will fail. */
-void touchWatchedKey(redisDb *db, robj *key) {
+void touchWatchedKey(redisDb *db, robj *key) {//检查指定的key是否有客户端在监视，如果有则设置dirty标记事务需要中断
     list *clients;
     listIter li;
     listNode *ln;
 
-    if (dictSize(db->watched_keys) == 0) return;
+    if (dictSize(db->watched_keys) == 0) return; //如果该key没有被监视直接返回
     clients = dictFetchValue(db->watched_keys, key);
-    if (!clients) return;
+    if (!clients) return; //执行到此处肯定有用户在监视key，如果字典中查不到，说明出错了，应该记录日志
 
     /* Mark all the clients watching this key as CLIENT_DIRTY_CAS */
     /* Check if we are already watching for this key */
     listRewind(clients,&li);
-    while((ln = listNext(&li))) {
+    while((ln = listNext(&li))) { //遍历client列表，记录标志，以让事务的EXEC命令执行时直接拒绝
         client *c = listNodeValue(ln);
 
         c->flags |= CLIENT_DIRTY_CAS;
@@ -319,20 +319,20 @@ void touchWatchedKeysOnFlush(int dbid) {
     }
 }
 
-void watchCommand(client *c) {
+void watchCommand(client *c) { //WATCH命令处理函数
     int j;
 
     if (c->flags & CLIENT_MULTI) {
         addReplyError(c,"WATCH inside MULTI is not allowed");
         return;
     }
-    for (j = 1; j < c->argc; j++)
+    for (j = 1; j < c->argc; j++) //将当前命令中的待watch的key依次记录监视列表
         watchForKey(c,c->argv[j]);
     addReply(c,shared.ok);
 }
 
-void unwatchCommand(client *c) {
+void unwatchCommand(client *c) {//UNWATCH命令处理函数
     unwatchAllKeys(c);
-    c->flags &= (~CLIENT_DIRTY_CAS);
+    c->flags &= (~CLIENT_DIRTY_CAS); //取消监视后清空客户端标志，否则下次执行EXEC时会失败
     addReply(c,shared.ok);
 }

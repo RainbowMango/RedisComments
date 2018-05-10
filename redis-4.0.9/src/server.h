@@ -566,15 +566,15 @@ typedef struct RedisModuleDigest {
 /* Objects encoding. Some kind of objects like Strings and Hashes can be
  * internally represented in multiple ways. The 'encoding' field of the object
  * is set to one of this fields for this object. */
-#define OBJ_ENCODING_RAW 0     /* Raw representation */
-#define OBJ_ENCODING_INT 1     /* Encoded as integer */
-#define OBJ_ENCODING_HT 2      /* Encoded as hash table */
-#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */
-#define OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */
-#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */
-#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */
-#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
-#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
+#define OBJ_ENCODING_RAW 0     /* Raw representation */ //表示对象构成:简单动态字符串
+#define OBJ_ENCODING_INT 1     /* Encoded as integer */ //表示对象构成:long类型整数
+#define OBJ_ENCODING_HT 2      /* Encoded as hash table */ //表示对象构成:哈希表，也即字典
+#define OBJ_ENCODING_ZIPMAP 3  /* Encoded as zipmap */ //表示对象构成:
+#define OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */ //表示对象构成: 双端链表
+#define OBJ_ENCODING_ZIPLIST 5 /* Encoded as ziplist */ //表示对象构成: 压缩列表
+#define OBJ_ENCODING_INTSET 6  /* Encoded as intset */ //表示对象构成: 整数集合
+#define OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */ //表示对象构成: 跳跃表
+#define OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */ //表示对象构成: embstr编码的简单动态字符串
 #define OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of ziplists */
 
 #define LRU_BITS 24
@@ -582,13 +582,13 @@ typedef struct RedisModuleDigest {
 #define LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
 
 #define OBJ_SHARED_REFCOUNT INT_MAX
-typedef struct redisObject {
-    unsigned type:4;
+typedef struct redisObject { //对象定义
+    unsigned type:4;  //对象类型: OBJ_STRING, OBJ_LIST, OBJ_SET, OBJ_ZSET, OBJ_HASH, OBJ_MODULE
     unsigned encoding:4;
     unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or
                             * LFU data (least significant 8 bits frequency
                             * and most significant 16 bits access time). */
-    int refcount;
+    int refcount;//对象的引用计数
     void *ptr;
 } robj;
 
@@ -613,20 +613,20 @@ typedef struct redisDb {
     dict *expires;              /* Timeout of keys with a timeout set */
     dict *blocking_keys;        /* Keys with clients waiting for data (BLPOP)*/
     dict *ready_keys;           /* Blocked keys that received a PUSH */
-    dict *watched_keys;         /* WATCHED keys for MULTI/EXEC CAS */
+    dict *watched_keys;         /* WATCHED keys for MULTI/EXEC CAS */ //记录被监视的key。字典中key值为所监视的key，value为监视该key的client
     int id;                     /* Database ID */
     long long avg_ttl;          /* Average TTL, just for stats */
 } redisDb;
 
 /* Client MULTI/EXEC state */
-typedef struct multiCmd {
-    robj **argv;
+typedef struct multiCmd { //事务命令结构体，存储命令参数列表、个数、命令的处理操作
+    robj **argv; 
     int argc;
     struct redisCommand *cmd;
 } multiCmd;
 
 typedef struct multiState {
-    multiCmd *commands;     /* Array of MULTI commands */
+    multiCmd *commands;     /* Array of MULTI commands */ //事务命令队列，FIFO
     int count;              /* Total number of MULTI commands */
     int minreplicas;        /* MINREPLICAS for synchronous replication */
     time_t minreplicas_timeout; /* MINREPLICAS timeout as unixtime. */
@@ -696,7 +696,7 @@ typedef struct client {
     time_t ctime;           /* Client creation time. */
     time_t lastinteraction; /* Time of the last interaction, used for timeout */
     time_t obuf_soft_limit_reached_time;
-    int flags;              /* Client flags: CLIENT_* macros. */
+    int flags;              /* Client flags: CLIENT_* macros. */ //client状态信息大杂烩，比如客户端开启事务后监视的键发生改变后记录CLIENT_DIRTY_CAS，以让EXEC命令执行时直接拒绝事务。
     int authenticated;      /* When requirepass is non-NULL. */
     int replstate;          /* Replication state if this is a slave. */
     int repl_put_online_on_ack; /* Install slave write handler on ACK. */
@@ -715,7 +715,7 @@ typedef struct client {
     int slave_listening_port; /* As configured with: SLAVECONF listening-port */
     char slave_ip[NET_IP_STR_LEN]; /* Optionally given by REPLCONF ip-address */
     int slave_capa;         /* Slave capabilities: SLAVE_CAPA_* bitwise OR. */
-    multiState mstate;      /* MULTI/EXEC state */
+    multiState mstate;      /* MULTI/EXEC state */ //标记某个客户端的事务状态，记录事务命令
     int btype;              /* Type of blocking op if CLIENT_BLOCKED. */
     blockingState bpop;     /* blocking state */
     long long woff;         /* Last write global replication offset. */
@@ -757,23 +757,23 @@ struct sharedObjectsStruct {
 };
 
 /* ZSETs use a specialized version of Skiplists */
-typedef struct zskiplistNode {
-    sds ele;
-    double score;
-    struct zskiplistNode *backward;
+typedef struct zskiplistNode { //skiplist结点定义
+    sds ele; //结点成员对象，多个结点不可以出现相同的成员
+    double score; //结点的分值，链表按照此分值从小到大排序，分值相同的节点按照ele大小排序
+    struct zskiplistNode *backward; //后退指针，可用于从表尾向表头遍历链表
     struct zskiplistLevel {
-        struct zskiplistNode *forward;
-        unsigned int span;
-    } level[];
+        struct zskiplistNode *forward; //当前层的前进指针
+        unsigned int span; //前进结点与当前结点的距离，在查找结点过程中累加距离可以得到结点的排位，即RANK
+    } level[]; //层数组，这里定义成空数组是一种编程技巧，可以在内存分配时一并分配，然后一并释放
 } zskiplistNode;
 
-typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;
-    unsigned long length;
-    int level;
+typedef struct zskiplist {//skiplist定义
+    struct zskiplistNode *header, *tail; //指向表头和表尾的结点
+    unsigned long length; //表中元素个数
+    int level; //注意这里不是最大支持的层数，而是当前表中层数最大节点的层数，即当前表最高有几层
 } zskiplist;
 
-typedef struct zset {
+typedef struct zset { 
     dict *dict;
     zskiplist *zsl;
 } zset;

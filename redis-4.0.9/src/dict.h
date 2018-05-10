@@ -73,7 +73,7 @@ typedef struct dictht {
     unsigned long used;
 } dictht;
 
-typedef struct dict {
+typedef struct dict { //字典结构体，使用hash表表示
     dictType *type;
     void *privdata;
     dictht ht[2];
