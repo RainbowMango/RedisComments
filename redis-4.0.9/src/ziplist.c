@@ -17,20 +17,20 @@
  *
  * NOTE: all fields are stored in little endian, if not specified otherwise.
  *
- * <uint32_t zlbytes> is an unsigned integer to hold the number of bytes that
+ * <uint32_t zlbytes> is an unsigned integer to hold the number of bytes that //表示ziplist占用的总字节数，包含zlbytes自身
  * the ziplist occupies, including the four bytes of the zlbytes field itself.
  * This value needs to be stored to be able to resize the entire structure
  * without the need to traverse it first.
  *
- * <uint32_t zltail> is the offset to the last entry in the list. This allows
+ * <uint32_t zltail> is the offset to the last entry in the list. This allows //表示最后一个entry的偏移量，用于方便定位到最后一个元素，方便从尾部pop或push
  * a pop operation on the far side of the list without the need for full
  * traversal.
  *
- * <uint16_t zllen> is the number of entries. When there are more than
+ * <uint16_t zllen> is the number of entries. When there are more than //表示entry的总个数，如果个数为2^16-1时就需要遍历整个ziplist求出总数了
  * 2^16-2 entires, this value is set to 2^16-1 and we need to traverse the
  * entire list to know how many items it holds.
  *
- * <uint8_t zlend> is a special entry representing the end of the ziplist.
+ * <uint8_t zlend> is a special entry representing the end of the ziplist. //ziplist结尾标记，固定值255
  * Is encoded as a single byte equal to 255. No other normal entry starts
  * with a byte set to the value of 255.
  *
