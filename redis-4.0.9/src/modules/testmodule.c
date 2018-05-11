@@ -401,7 +401,7 @@ int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) 
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
 
-    if (RedisModule_Init(ctx,"test",1,REDISMODULE_APIVER_1)
+    if (RedisModule_Init(ctx,"test",1,REDISMODULE_APIVER_1) //告诉Redis内核，模块的名字、模块版本、模块使用的API版本，该信息存放于ctx->module结构中
         == REDISMODULE_ERR) return REDISMODULE_ERR;
 
     if (RedisModule_CreateCommand(ctx,"test.call",

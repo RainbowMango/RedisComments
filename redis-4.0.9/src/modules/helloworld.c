@@ -45,10 +45,10 @@
  * missing in Redis. The command uses two important API calls: one to
  * fetch the currently selected DB, the other in order to send the client
  * an integer reply as response. */
-int HelloSimple_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int HelloSimple_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) { //实现最简单的命令，调用两个API完成
     REDISMODULE_NOT_USED(argv);
     REDISMODULE_NOT_USED(argc);
-    RedisModule_ReplyWithLongLong(ctx,RedisModule_GetSelectedDb(ctx));
+    RedisModule_ReplyWithLongLong(ctx,RedisModule_GetSelectedDb(ctx)); //使用API获取选择的DB，再使用API返回给客户端
     return REDISMODULE_OK;
 }
 
@@ -58,15 +58,15 @@ int HelloSimple_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int 
  *
  * You'll find this command to be roughly as fast as the actual RPUSH
  * command. */
-int HelloPushNative_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+int HelloPushNative_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) //实现RPUSH功能，e.g. "HELLO.PUSH.NATIVE key element" 向key指向的value中加入新的元素element
 {
-    if (argc != 3) return RedisModule_WrongArity(ctx);
+    if (argc != 3) return RedisModule_WrongArity(ctx); //命令参数有误时，通过API直接返回
 
-    RedisModuleKey *key = RedisModule_OpenKey(ctx,argv[1],
+    RedisModuleKey *key = RedisModule_OpenKey(ctx,argv[1], //打开key
         REDISMODULE_READ|REDISMODULE_WRITE);
 
-    RedisModule_ListPush(key,REDISMODULE_LIST_TAIL,argv[2]);
-    size_t newlen = RedisModule_ValueLength(key);
+    RedisModule_ListPush(key,REDISMODULE_LIST_TAIL,argv[2]); //向key指向的value中push一个元素
+    size_t newlen = RedisModule_ValueLength(key); //返回key的元素个数
     RedisModule_CloseKey(key);
     RedisModule_ReplyWithLongLong(ctx,newlen);
     return REDISMODULE_OK;
@@ -77,15 +77,15 @@ int HelloPushNative_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, 
  * approach is useful when you need to call Redis commands that are not
  * available as low level APIs, or when you don't need the maximum speed
  * possible but instead prefer implementation simplicity. */
-int HelloPushCall_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc)
+int HelloPushCall_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) //使用高级别API，即直接使用redis命令。适用于对性能要求不高的，对开发效率高的场景
 {
     if (argc != 3) return RedisModule_WrongArity(ctx);
 
     RedisModuleCallReply *reply;
 
-    reply = RedisModule_Call(ctx,"RPUSH","ss",argv[1],argv[2]);
-    long long len = RedisModule_CallReplyInteger(reply);
-    RedisModule_FreeCallReply(reply);
+    reply = RedisModule_Call(ctx,"RPUSH","ss",argv[1],argv[2]); //调用原生命令插入数据, 原生命令返回信息通过reply接收
+    long long len = RedisModule_CallReplyInteger(reply); //获取原生命令返回的数值
+    RedisModule_FreeCallReply(reply); //释放存放原生命令回复内存
     RedisModule_ReplyWithLongLong(ctx,len);
     return REDISMODULE_OK;
 }
@@ -100,7 +100,7 @@ int HelloPushCall2_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, i
     RedisModuleCallReply *reply;
 
     reply = RedisModule_Call(ctx,"RPUSH","ss",argv[1],argv[2]);
-    RedisModule_ReplyWithCallReply(ctx,reply);
+    RedisModule_ReplyWithCallReply(ctx,reply); //将原生命令产生的回复，返回到客户端
     RedisModule_FreeCallReply(reply);
     return REDISMODULE_OK;
 }
@@ -542,7 +542,7 @@ int HelloLeftPad_RedisCommand(RedisModuleCtx *ctx, RedisModuleString **argv, int
 
 /* This function must be present on each Redis module. It is used in order to
  * register the commands into the Redis server. */
-int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) {
+int RedisModule_OnLoad(RedisModuleCtx *ctx, RedisModuleString **argv, int argc) { //初始化模块并注册命令
     if (RedisModule_Init(ctx,"helloworld",1,REDISMODULE_APIVER_1)
         == REDISMODULE_ERR) return REDISMODULE_ERR;
 

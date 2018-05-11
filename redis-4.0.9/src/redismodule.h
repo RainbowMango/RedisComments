@@ -154,24 +154,24 @@ void REDISMODULE_API_FUNC(RedisModule_Free)(void *ptr);
 void *REDISMODULE_API_FUNC(RedisModule_Calloc)(size_t nmemb, size_t size);
 char *REDISMODULE_API_FUNC(RedisModule_Strdup)(const char *str);
 int REDISMODULE_API_FUNC(RedisModule_GetApi)(const char *, void *);
-int REDISMODULE_API_FUNC(RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep);
+int REDISMODULE_API_FUNC(RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep); //API: 注册命令
 void REDISMODULE_API_FUNC(RedisModule_SetModuleAttribs)(RedisModuleCtx *ctx, const char *name, int ver, int apiver);
 int REDISMODULE_API_FUNC(RedisModule_IsModuleNameBusy)(const char *name);
-int REDISMODULE_API_FUNC(RedisModule_WrongArity)(RedisModuleCtx *ctx);
-int REDISMODULE_API_FUNC(RedisModule_ReplyWithLongLong)(RedisModuleCtx *ctx, long long ll);
-int REDISMODULE_API_FUNC(RedisModule_GetSelectedDb)(RedisModuleCtx *ctx);
+int REDISMODULE_API_FUNC(RedisModule_WrongArity)(RedisModuleCtx *ctx); //API: 命令参数错误，返回给客户端
+int REDISMODULE_API_FUNC(RedisModule_ReplyWithLongLong)(RedisModuleCtx *ctx, long long ll); //API: 返回客户端一个整数
+int REDISMODULE_API_FUNC(RedisModule_GetSelectedDb)(RedisModuleCtx *ctx); //API: 获取当前选中的DB, 返回一个整型值
 int REDISMODULE_API_FUNC(RedisModule_SelectDb)(RedisModuleCtx *ctx, int newid);
-void *REDISMODULE_API_FUNC(RedisModule_OpenKey)(RedisModuleCtx *ctx, RedisModuleString *keyname, int mode);
-void REDISMODULE_API_FUNC(RedisModule_CloseKey)(RedisModuleKey *kp);
+void *REDISMODULE_API_FUNC(RedisModule_OpenKey)(RedisModuleCtx *ctx, RedisModuleString *keyname, int mode); //API: 打开key，也即把该key对应的信息统一放到一起，方便处理
+void REDISMODULE_API_FUNC(RedisModule_CloseKey)(RedisModuleKey *kp); //API: 关闭key
 int REDISMODULE_API_FUNC(RedisModule_KeyType)(RedisModuleKey *kp);
-size_t REDISMODULE_API_FUNC(RedisModule_ValueLength)(RedisModuleKey *kp);
-int REDISMODULE_API_FUNC(RedisModule_ListPush)(RedisModuleKey *kp, int where, RedisModuleString *ele);
+size_t REDISMODULE_API_FUNC(RedisModule_ValueLength)(RedisModuleKey *kp); //API: 返回key的元素个数
+int REDISMODULE_API_FUNC(RedisModule_ListPush)(RedisModuleKey *kp, int where, RedisModuleString *ele); //API: 向链表结构中插入数据
 RedisModuleString *REDISMODULE_API_FUNC(RedisModule_ListPop)(RedisModuleKey *key, int where);
-RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_Call)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...);
+RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_Call)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...); //API: 调用Redis源生命令，返回值为命令返回
 const char *REDISMODULE_API_FUNC(RedisModule_CallReplyProto)(RedisModuleCallReply *reply, size_t *len);
-void REDISMODULE_API_FUNC(RedisModule_FreeCallReply)(RedisModuleCallReply *reply);
+void REDISMODULE_API_FUNC(RedisModule_FreeCallReply)(RedisModuleCallReply *reply); //API: 释放调用源生命令产生的回复信息结构体
 int REDISMODULE_API_FUNC(RedisModule_CallReplyType)(RedisModuleCallReply *reply);
-long long REDISMODULE_API_FUNC(RedisModule_CallReplyInteger)(RedisModuleCallReply *reply);
+long long REDISMODULE_API_FUNC(RedisModule_CallReplyInteger)(RedisModuleCallReply *reply); //API: 向客户端返回使用Redis源生命令产生的回复
 size_t REDISMODULE_API_FUNC(RedisModule_CallReplyLength)(RedisModuleCallReply *reply);
 RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_CallReplyArrayElement)(RedisModuleCallReply *reply, size_t idx);
 RedisModuleString *REDISMODULE_API_FUNC(RedisModule_CreateString)(RedisModuleCtx *ctx, const char *ptr, size_t len);

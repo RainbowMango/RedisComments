@@ -129,7 +129,7 @@ typedef struct RedisModuleCtx RedisModuleCtx;
 #define REDISMODULE_CTX_THREAD_SAFE (1<<5)
 
 /* This represents a Redis key opened with RM_OpenKey(). */
-struct RedisModuleKey {
+struct RedisModuleKey { //定义被打开key的信息
     RedisModuleCtx *ctx;
     redisDb *db;
     robj *key;      /* Key name object. */
@@ -3932,7 +3932,7 @@ int moduleLoad(const char *path, void **module_argv, int module_argc) { //通过dl
     void *handle;
     RedisModuleCtx ctx = REDISMODULE_CTX_INIT;
 
-    handle = dlopen(path,RTLD_NOW|RTLD_LOCAL);
+    handle = dlopen(path,RTLD_NOW|RTLD_LOCAL); //RTLD_NOW: 决定解析方式，解析所有符号地址，如果不存在则失败; RTLD_LOCAL: 定义符号范围，解析得到的符号不能被后续加载的其他库使用，防止干扰，也是默认行为
     if (handle == NULL) {
         serverLog(LL_WARNING, "Module %s failed to load: %s", path, dlerror());
         return C_ERR;
