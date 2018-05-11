@@ -45,8 +45,8 @@
 #include <stdint.h>
 
 /* Toggle the 16 bit unsigned integer pointed by *p from little endian to
- * big endian */
-void memrev16(void *p) {
+ * big endian */ //注释有误，该函数为大小端转换，而不是单纯的从小端转到大端
+void memrev16(void *p) { //逆置2字节内存
     unsigned char *x = p, t;
 
     t = x[0];
@@ -55,8 +55,8 @@ void memrev16(void *p) {
 }
 
 /* Toggle the 32 bit unsigned integer pointed by *p from little endian to
- * big endian */
-void memrev32(void *p) {
+ * big endian */ //注释有误，该函数为大小端转换，而不是单纯的从小端转到大端
+void memrev32(void *p) { //逆置4字节内存
     unsigned char *x = p, t;
 
     t = x[0];
@@ -68,8 +68,8 @@ void memrev32(void *p) {
 }
 
 /* Toggle the 64 bit unsigned integer pointed by *p from little endian to
- * big endian */
-void memrev64(void *p) {
+ * big endian */ //注释有误，该函数为大小端转换，而不是单纯的从小端转到大端
+void memrev64(void *p) { //逆置8字节内存
     unsigned char *x = p, t;
 
     t = x[0];
@@ -86,17 +86,17 @@ void memrev64(void *p) {
     x[4] = t;
 }
 
-uint16_t intrev16(uint16_t v) {
+uint16_t intrev16(uint16_t v) { //unsigned short int类型数据大小端转换
     memrev16(&v);
     return v;
 }
 
-uint32_t intrev32(uint32_t v) {
+uint32_t intrev32(uint32_t v) { //unsigned int类型数据大小端转换
     memrev32(&v);
     return v;
 }
 
-uint64_t intrev64(uint64_t v) {
+uint64_t intrev64(uint64_t v) { //unsigned long long类型数据大小端转换
     memrev64(&v);
     return v;
 }
