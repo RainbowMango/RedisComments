@@ -33,7 +33,7 @@
 #include <stdint.h>
 
 typedef struct intset {
-    uint32_t encoding;
+    uint32_t encoding; //指定元素存储的编码，也即元素字节数。个人认为使用4字节有些浪费
     uint32_t length;
     int8_t contents[];
 } intset;
