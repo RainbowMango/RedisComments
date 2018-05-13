@@ -895,7 +895,7 @@ struct redisServer {
     size_t initial_memory_usage; /* Bytes used after initialization. */
     int always_show_logo;       /* Show logo even for non-stdout logging. */
     /* Modules */
-    dict *moduleapi;            /* Exported APIs dictionary for modules. */
+    dict *moduleapi;            /* Exported APIs dictionary for modules. */ //为module特性开放的API，使用hash表存储
     list *loadmodule_queue;     /* List of modules to load at startup. */
     int module_blocked_pipe[2]; /* Pipe used to awake the event loop if a
                                    client blocked on a module command needs

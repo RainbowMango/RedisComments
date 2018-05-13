@@ -148,11 +148,11 @@ typedef struct RedisModuleTypeMethods {
 #define REDISMODULE_API_FUNC(x) (*x)
 
 
-void *REDISMODULE_API_FUNC(RedisModule_Alloc)(size_t bytes);
-void *REDISMODULE_API_FUNC(RedisModule_Realloc)(void *ptr, size_t bytes);
-void REDISMODULE_API_FUNC(RedisModule_Free)(void *ptr);
-void *REDISMODULE_API_FUNC(RedisModule_Calloc)(size_t nmemb, size_t size);
-char *REDISMODULE_API_FUNC(RedisModule_Strdup)(const char *str);
+void *REDISMODULE_API_FUNC(RedisModule_Alloc)(size_t bytes); //API: 分配指定大小的内存，类似malloc()
+void *REDISMODULE_API_FUNC(RedisModule_Realloc)(void *ptr, size_t bytes); //API: 分配内存，也是扩大内存。如果内存位置变化，将原内存中数据完整搬迁到新内存. 类似realloc()
+void REDISMODULE_API_FUNC(RedisModule_Free)(void *ptr); //API: 释放内存, 类似free()
+void *REDISMODULE_API_FUNC(RedisModule_Calloc)(size_t nmemb, size_t size); //API: 分配内存，参数1: 元素大小， 参数2: 元素数量, 类似 calloc()
+char *REDISMODULE_API_FUNC(RedisModule_Strdup)(const char *str); //API: 复制字符串，内部自动分配内存，并返回新字符串指针
 int REDISMODULE_API_FUNC(RedisModule_GetApi)(const char *, void *);
 int REDISMODULE_API_FUNC(RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep); //API: 注册命令
 void REDISMODULE_API_FUNC(RedisModule_SetModuleAttribs)(RedisModuleCtx *ctx, const char *name, int ver, int apiver);
@@ -191,7 +191,7 @@ int REDISMODULE_API_FUNC(RedisModule_ReplyWithDouble)(RedisModuleCtx *ctx, doubl
 int REDISMODULE_API_FUNC(RedisModule_ReplyWithCallReply)(RedisModuleCtx *ctx, RedisModuleCallReply *reply);
 int REDISMODULE_API_FUNC(RedisModule_StringToLongLong)(const RedisModuleString *str, long long *ll);
 int REDISMODULE_API_FUNC(RedisModule_StringToDouble)(const RedisModuleString *str, double *d);
-void REDISMODULE_API_FUNC(RedisModule_AutoMemory)(RedisModuleCtx *ctx);
+void REDISMODULE_API_FUNC(RedisModule_AutoMemory)(RedisModuleCtx *ctx); //API: 设置module内存管理模式为自动
 int REDISMODULE_API_FUNC(RedisModule_Replicate)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...);
 int REDISMODULE_API_FUNC(RedisModule_ReplicateVerbatim)(RedisModuleCtx *ctx);
 const char *REDISMODULE_API_FUNC(RedisModule_CallReplyStringPtr)(RedisModuleCallReply *reply, size_t *len);
@@ -272,7 +272,7 @@ static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int 
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
     void *getapifuncptr = ((void**)ctx)[0];
     RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
-    REDISMODULE_GET_API(Alloc);
+    REDISMODULE_GET_API(Alloc); //编译完后变成  RedisModule_GetApi("RedisModule_Alloc", ((void **)&RedisModule_Alloc))
     REDISMODULE_GET_API(Calloc);
     REDISMODULE_GET_API(Free);
     REDISMODULE_GET_API(Realloc);
