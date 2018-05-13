@@ -144,7 +144,7 @@ int dictResize(dict *d)
 }
 
 /* Expand or create the hash table */
-int dictExpand(dict *d, unsigned long size)
+int dictExpand(dict *d, unsigned long size) //hash表扩展
 {
     dictht n; /* the new hash table */
     unsigned long realsize = _dictNextPower(size);
@@ -262,7 +262,7 @@ static void _dictRehashStep(dict *d) {
 }
 
 /* Add an element to the target hash table */
-int dictAdd(dict *d, void *key, void *val)
+int dictAdd(dict *d, void *key, void *val) //hash表中插入一对key-value
 {
     dictEntry *entry = dictAddRaw(d,key,NULL);
 
@@ -289,13 +289,13 @@ int dictAdd(dict *d, void *key, void *val)
  *
  * If key was added, the hash entry is returned to be manipulated by the caller.
  */
-dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
+dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing) //hash表中插入一个key，并不插入value
 {
     long index;
     dictEntry *entry;
     dictht *ht;
 
-    if (dictIsRehashing(d)) _dictRehashStep(d);
+    if (dictIsRehashing(d)) _dictRehashStep(d); //如果在做re-hash，则该动作相当于touch一次hash表，则做一步re-hash.
 
     /* Get the index of the new element, or -1 if
      * the element already exists. */
@@ -308,7 +308,7 @@ dictEntry *dictAddRaw(dict *d, void *key, dictEntry **existing)
      * more frequently. */
     ht = dictIsRehashing(d) ? &d->ht[1] : &d->ht[0];
     entry = zmalloc(sizeof(*entry));
-    entry->next = ht->table[index];
+    entry->next = ht->table[index]; //冲突表中选择头部插入，为提高效率
     ht->table[index] = entry;
     ht->used++;
 
@@ -914,29 +914,29 @@ unsigned long dictScan(dict *d,
 /* ------------------------- private functions ------------------------------ */
 
 /* Expand the hash table if needed */
-static int _dictExpandIfNeeded(dict *d)
+static int _dictExpandIfNeeded(dict *d) //检查hash表是否需要re-hash来解决冲突，新的hash表空间是原空间2倍
 {
     /* Incremental rehashing already in progress. Return. */
     if (dictIsRehashing(d)) return DICT_OK;
 
     /* If the hash table is empty expand it to the initial size. */
-    if (d->ht[0].size == 0) return dictExpand(d, DICT_HT_INITIAL_SIZE);
+    if (d->ht[0].size == 0) return dictExpand(d, DICT_HT_INITIAL_SIZE); //如果是一个空hash表，则初始化为初始空间大小
 
     /* If we reached the 1:1 ratio, and we are allowed to resize the hash
      * table (global setting) or we should avoid it but the ratio between
      * elements/buckets is over the "safe" threshold, we resize doubling
      * the number of buckets. */
-    if (d->ht[0].used >= d->ht[0].size &&
+    if (d->ht[0].used >= d->ht[0].size && //re-hash的条件之一是负载因子达到1
         (dict_can_resize ||
-         d->ht[0].used/d->ht[0].size > dict_force_resize_ratio))
+         d->ht[0].used/d->ht[0].size > dict_force_resize_ratio)) //re-hash的条件之二是当前允许re-hash或负载因子达到5. 比如，BGSAVE命令执行时，开启子进程保存文件，此时轻易不要re-hash，否则会破坏操作系统的Copy-On-Write机制，导致性能下降，所以此时会禁止re-hash，实际上也不是完全禁止，除非万不得已(负载因子达到5)
     {
-        return dictExpand(d, d->ht[0].used*2);
+        return dictExpand(d, d->ht[0].used*2); //注意此处，下次hash表大小至少为当前元素*2 或者更大的某个2的N次幂
     }
     return DICT_OK;
 }
 
 /* Our hash table capability is a power of two */
-static unsigned long _dictNextPower(unsigned long size)
+static unsigned long _dictNextPower(unsigned long size) //hash表大小总是等于2的某次幂，跟据需求的大小(参数size)，寻找满足要求的hash表大小。 参数含义也可理解成最小表的大小
 {
     unsigned long i = DICT_HT_INITIAL_SIZE;
 
@@ -955,7 +955,7 @@ static unsigned long _dictNextPower(unsigned long size)
  *
  * Note that if we are in the process of rehashing the hash table, the
  * index is always returned in the context of the second (new) hash table. */
-static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **existing)
+static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **existing) //试着插入一个key，并不真正插入，如果元素不存在返回插入位置, 如果存在通过参数传出
 {
     unsigned long idx, table;
     dictEntry *he;
@@ -968,7 +968,7 @@ static long _dictKeyIndex(dict *d, const void *key, uint64_t hash, dictEntry **e
         idx = hash & d->ht[table].sizemask;
         /* Search if this slot does not already contain the given key */
         he = d->ht[table].table[idx];
-        while(he) {
+        while(he) { //从冲突列表中遍历检查key，此处使用O(n)复杂度遍历，因为re-hash机制保证了冲突列表不会很长，使用skip-list返而变得复杂
             if (key==he->key || dictCompareKeys(d, key, he->key)) {
                 if (existing) *existing = he;
                 return -1;
