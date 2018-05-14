@@ -148,30 +148,30 @@ typedef struct RedisModuleTypeMethods {
 #define REDISMODULE_API_FUNC(x) (*x)
 
 
-void *REDISMODULE_API_FUNC(RedisModule_Alloc)(size_t bytes); //API: 分配指定大小的内存，类似malloc()
-void *REDISMODULE_API_FUNC(RedisModule_Realloc)(void *ptr, size_t bytes); //API: 分配内存，也是扩大内存。如果内存位置变化，将原内存中数据完整搬迁到新内存. 类似realloc()
-void REDISMODULE_API_FUNC(RedisModule_Free)(void *ptr); //API: 释放内存, 类似free()
-void *REDISMODULE_API_FUNC(RedisModule_Calloc)(size_t nmemb, size_t size); //API: 分配内存，参数1: 元素大小， 参数2: 元素数量, 类似 calloc()
-char *REDISMODULE_API_FUNC(RedisModule_Strdup)(const char *str); //API: 复制字符串，内部自动分配内存，并返回新字符串指针
-int REDISMODULE_API_FUNC(RedisModule_GetApi)(const char *, void *);
-int REDISMODULE_API_FUNC(RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep); //API: 注册命令
+void *REDISMODULE_API_FUNC(RedisModule_Alloc)(size_t bytes); //声明函数指针RedisModule_Alloc，该函数分配指定大小的内存，类似malloc()
+void *REDISMODULE_API_FUNC(RedisModule_Realloc)(void *ptr, size_t bytes); //API函数指针: 分配内存，也是扩大内存。如果内存位置变化，将原内存中数据完整搬迁到新内存. 类似realloc()
+void REDISMODULE_API_FUNC(RedisModule_Free)(void *ptr); //API函数指针: 释放内存, 类似free()
+void *REDISMODULE_API_FUNC(RedisModule_Calloc)(size_t nmemb, size_t size); //API函数指针: 分配内存，参数1: 元素大小， 参数2: 元素数量, 类似 calloc()
+char *REDISMODULE_API_FUNC(RedisModule_Strdup)(const char *str); //API函数指针: 复制字符串，内部自动分配内存，并返回新字符串指针
+int REDISMODULE_API_FUNC(RedisModule_GetApi)(const char *, void *); //声明API函数指针RedisModule_GetApi，该函数负责查找每个API对应的底层函数
+int REDISMODULE_API_FUNC(RedisModule_CreateCommand)(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc cmdfunc, const char *strflags, int firstkey, int lastkey, int keystep); //API函数指针: 注册命令
 void REDISMODULE_API_FUNC(RedisModule_SetModuleAttribs)(RedisModuleCtx *ctx, const char *name, int ver, int apiver);
 int REDISMODULE_API_FUNC(RedisModule_IsModuleNameBusy)(const char *name);
-int REDISMODULE_API_FUNC(RedisModule_WrongArity)(RedisModuleCtx *ctx); //API: 命令参数错误，返回给客户端
-int REDISMODULE_API_FUNC(RedisModule_ReplyWithLongLong)(RedisModuleCtx *ctx, long long ll); //API: 返回客户端一个整数
-int REDISMODULE_API_FUNC(RedisModule_GetSelectedDb)(RedisModuleCtx *ctx); //API: 获取当前选中的DB, 返回一个整型值
+int REDISMODULE_API_FUNC(RedisModule_WrongArity)(RedisModuleCtx *ctx); //API函数指针: 命令参数错误，返回给客户端
+int REDISMODULE_API_FUNC(RedisModule_ReplyWithLongLong)(RedisModuleCtx *ctx, long long ll); //API函数指针: 返回客户端一个整数
+int REDISMODULE_API_FUNC(RedisModule_GetSelectedDb)(RedisModuleCtx *ctx); //API函数指针: 获取当前选中的DB, 返回一个整型值
 int REDISMODULE_API_FUNC(RedisModule_SelectDb)(RedisModuleCtx *ctx, int newid);
-void *REDISMODULE_API_FUNC(RedisModule_OpenKey)(RedisModuleCtx *ctx, RedisModuleString *keyname, int mode); //API: 打开key，也即把该key对应的信息统一放到一起，方便处理
-void REDISMODULE_API_FUNC(RedisModule_CloseKey)(RedisModuleKey *kp); //API: 关闭key
+void *REDISMODULE_API_FUNC(RedisModule_OpenKey)(RedisModuleCtx *ctx, RedisModuleString *keyname, int mode); //API函数指针: 打开key，也即把该key对应的信息统一放到一起，方便处理
+void REDISMODULE_API_FUNC(RedisModule_CloseKey)(RedisModuleKey *kp); //API函数指针: 关闭key
 int REDISMODULE_API_FUNC(RedisModule_KeyType)(RedisModuleKey *kp);
-size_t REDISMODULE_API_FUNC(RedisModule_ValueLength)(RedisModuleKey *kp); //API: 返回key的元素个数
-int REDISMODULE_API_FUNC(RedisModule_ListPush)(RedisModuleKey *kp, int where, RedisModuleString *ele); //API: 向链表结构中插入数据
+size_t REDISMODULE_API_FUNC(RedisModule_ValueLength)(RedisModuleKey *kp); //API函数指针: 返回key的元素个数
+int REDISMODULE_API_FUNC(RedisModule_ListPush)(RedisModuleKey *kp, int where, RedisModuleString *ele); //API函数指针: 向链表结构中插入数据
 RedisModuleString *REDISMODULE_API_FUNC(RedisModule_ListPop)(RedisModuleKey *key, int where);
-RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_Call)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...); //API: 调用Redis源生命令，返回值为命令返回
+RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_Call)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...); //API函数指针: 调用Redis源生命令，返回值为命令返回
 const char *REDISMODULE_API_FUNC(RedisModule_CallReplyProto)(RedisModuleCallReply *reply, size_t *len);
-void REDISMODULE_API_FUNC(RedisModule_FreeCallReply)(RedisModuleCallReply *reply); //API: 释放调用源生命令产生的回复信息结构体
+void REDISMODULE_API_FUNC(RedisModule_FreeCallReply)(RedisModuleCallReply *reply); //API函数指针: 释放调用源生命令产生的回复信息结构体
 int REDISMODULE_API_FUNC(RedisModule_CallReplyType)(RedisModuleCallReply *reply);
-long long REDISMODULE_API_FUNC(RedisModule_CallReplyInteger)(RedisModuleCallReply *reply); //API: 向客户端返回使用Redis源生命令产生的回复
+long long REDISMODULE_API_FUNC(RedisModule_CallReplyInteger)(RedisModuleCallReply *reply); //API函数指针: 向客户端返回使用Redis源生命令产生的回复
 size_t REDISMODULE_API_FUNC(RedisModule_CallReplyLength)(RedisModuleCallReply *reply);
 RedisModuleCallReply *REDISMODULE_API_FUNC(RedisModule_CallReplyArrayElement)(RedisModuleCallReply *reply, size_t idx);
 RedisModuleString *REDISMODULE_API_FUNC(RedisModule_CreateString)(RedisModuleCtx *ctx, const char *ptr, size_t len);
@@ -191,7 +191,7 @@ int REDISMODULE_API_FUNC(RedisModule_ReplyWithDouble)(RedisModuleCtx *ctx, doubl
 int REDISMODULE_API_FUNC(RedisModule_ReplyWithCallReply)(RedisModuleCtx *ctx, RedisModuleCallReply *reply);
 int REDISMODULE_API_FUNC(RedisModule_StringToLongLong)(const RedisModuleString *str, long long *ll);
 int REDISMODULE_API_FUNC(RedisModule_StringToDouble)(const RedisModuleString *str, double *d);
-void REDISMODULE_API_FUNC(RedisModule_AutoMemory)(RedisModuleCtx *ctx); //API: 设置module内存管理模式为自动
+void REDISMODULE_API_FUNC(RedisModule_AutoMemory)(RedisModuleCtx *ctx); //API函数指针: 设置module内存管理模式为自动
 int REDISMODULE_API_FUNC(RedisModule_Replicate)(RedisModuleCtx *ctx, const char *cmdname, const char *fmt, ...);
 int REDISMODULE_API_FUNC(RedisModule_ReplicateVerbatim)(RedisModuleCtx *ctx);
 const char *REDISMODULE_API_FUNC(RedisModule_CallReplyStringPtr)(RedisModuleCallReply *reply, size_t *len);
@@ -270,9 +270,9 @@ int REDISMODULE_API_FUNC(RedisModule_SubscribeToKeyspaceEvents)(RedisModuleCtx *
 /* This is included inline inside each Redis module. */
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) __attribute__((unused)); //__attribute__((unused)) 表示该函数可能没用，通知编译器别告警
 static int RedisModule_Init(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
-    void *getapifuncptr = ((void**)ctx)[0];
-    RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr;
-    REDISMODULE_GET_API(Alloc); //编译完后变成  RedisModule_GetApi("RedisModule_Alloc", ((void **)&RedisModule_Alloc))
+    void *getapifuncptr = ((void**)ctx)[0]; //先获取查询函数指针的函数，该函数在ctx初始化时已经赋值
+    RedisModule_GetApi = (int (*)(const char *, void *)) (unsigned long)getapifuncptr; //给函数指针RedisModule_GetApi赋值
+    REDISMODULE_GET_API(Alloc); //给函数指针RedisModule_Alloc赋值，下同
     REDISMODULE_GET_API(Calloc);
     REDISMODULE_GET_API(Free);
     REDISMODULE_GET_API(Realloc);

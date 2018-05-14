@@ -99,7 +99,7 @@ typedef struct RedisModulePoolAllocBlock {
 struct RedisModuleBlockedClient;
 
 struct RedisModuleCtx {
-    void *getapifuncptr;            /* NOTE: Must be the first field. */
+    void *getapifuncptr;            /* NOTE: Must be the first field. */ //初始化时即指个一个函数，该函数作用是查找接口API对应的函数指针
     struct RedisModule *module;     /* Module reference. */
     client *client;                 /* Client calling a command. */
     struct RedisModuleBlockedClient *blocked_client; /* Blocked client for
@@ -425,7 +425,7 @@ int moduleDelKeyIfEmpty(RedisModuleKey *key) {
 /* --------------------------------------------------------------------------
  * Service API exported to modules
  *
- * Note that all the exported APIs are called RM_<funcname> in the core
+ * Note that all the exported APIs are called RM_<funcname> in the core //所有API的内部实现都是RM_<funcname>, 对外提供该函数的函数指针，命名为RedisModule_<funcname>
  * and RedisModule_<funcname> in the module side (defined as function
  * pointers in redismodule.h). In this way the dynamic linker does not
  * mess with our global function pointers, overriding it with the symbols
@@ -438,7 +438,7 @@ int moduleDelKeyIfEmpty(RedisModuleKey *key) {
  *
  * This function is not meant to be used by modules developer, it is only
  * used implicitly by including redismodule.h. */
-int RM_GetApi(const char *funcname, void **targetPtrPtr) {
+int RM_GetApi(const char *funcname, void **targetPtrPtr) { //跟据开放给外部的API名字查找函数指针
     dictEntry *he = dictFind(server.moduleapi, funcname);
     if (!he) return REDISMODULE_ERR;
     *targetPtrPtr = dictGetVal(he);
@@ -673,7 +673,7 @@ int RM_CreateCommand(RedisModuleCtx *ctx, const char *name, RedisModuleCmdFunc c
  *
  * This is an internal function, Redis modules developers don't need
  * to use it. */
-void RM_SetModuleAttribs(RedisModuleCtx *ctx, const char *name, int ver, int apiver) {
+void RM_SetModuleAttribs(RedisModuleCtx *ctx, const char *name, int ver, int apiver) { //初如化ctx->module结构体
     RedisModule *module;
 
     if (ctx->module != NULL) return;
@@ -687,7 +687,7 @@ void RM_SetModuleAttribs(RedisModuleCtx *ctx, const char *name, int ver, int api
 
 /* Return non-zero if the module name is busy.
  * Otherwise zero is returned. */
-int RM_IsModuleNameBusy(const char *name) {
+int RM_IsModuleNameBusy(const char *name) { //查询module名字是否已经存在
     sds modulename = sdsnew(name);
     dictEntry *de = dictFind(modules,modulename);
     sdsfree(modulename);
