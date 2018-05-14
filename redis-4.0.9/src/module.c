@@ -54,7 +54,7 @@ static dict *modules; /* Hash table of modules. SDS -> RedisModule ptr.*/
 
 /* Entries in the context->amqueue array, representing objects to free
  * when the callback returns. */
-struct AutoMemEntry {
+struct AutoMemEntry { //自动内存块定义，指名内存块地址及类型
     void *ptr;
     int type;
 };
@@ -99,14 +99,14 @@ typedef struct RedisModulePoolAllocBlock {
 struct RedisModuleBlockedClient;
 
 struct RedisModuleCtx {
-    void *getapifuncptr;            /* NOTE: Must be the first field. */ //初始化时即指个一个函数，该函数作用是查找接口API对应的函数指针
+    void *getapifuncptr;            /* NOTE: Must be the first field. */ //初始化时即指向一个函数，该函数作用是查找接口API对应的函数指针
     struct RedisModule *module;     /* Module reference. */
     client *client;                 /* Client calling a command. */
     struct RedisModuleBlockedClient *blocked_client; /* Blocked client for
                                                         thread safe context. */
-    struct AutoMemEntry *amqueue;   /* Auto memory queue of objects to free. */
-    int amqueue_len;                /* Number of slots in amqueue. */
-    int amqueue_used;               /* Number of used slots in amqueue. */
+    struct AutoMemEntry *amqueue;   /* Auto memory queue of objects to free. */ //自动内存队列，每个元素即一块内存地址，待回调结束时自动释放
+    int amqueue_len;                /* Number of slots in amqueue. */ //自动内存队列分配的总长度
+    int amqueue_used;               /* Number of used slots in amqueue. */ //自动内存队列已使用的长度
     int flags;                      /* REDISMODULE_CTX_... flags. */
     void **postponed_arrays;        /* To set with RM_ReplySetArrayLength(). */
     int postponed_arrays_count;     /* Number of entries in postponed_arrays. */
@@ -712,9 +712,9 @@ void RM_AutoMemory(RedisModuleCtx *ctx) {
 }
 
 /* Add a new object to release automatically when the callback returns. */
-void autoMemoryAdd(RedisModuleCtx *ctx, int type, void *ptr) {
-    if (!(ctx->flags & REDISMODULE_CTX_AUTO_MEMORY)) return;
-    if (ctx->amqueue_used == ctx->amqueue_len) {
+void autoMemoryAdd(RedisModuleCtx *ctx, int type, void *ptr) { //将一段内存记录到ctx的自动回收队列中(实际是一个AutoMemEntry结构体指针数组)
+    if (!(ctx->flags & REDISMODULE_CTX_AUTO_MEMORY)) return; //如果ctx不支持自动内存回收，则不添加
+    if (ctx->amqueue_used == ctx->amqueue_len) { //数组长度已用完，则已2倍速增大且保证最小是16个，并把原有元素迁移过去
         ctx->amqueue_len *= 2;
         if (ctx->amqueue_len < 16) ctx->amqueue_len = 16;
         ctx->amqueue = zrealloc(ctx->amqueue,sizeof(struct AutoMemEntry)*ctx->amqueue_len);
@@ -891,7 +891,7 @@ void RM_RetainString(RedisModuleCtx *ctx, RedisModuleString *str) {
 /* Given a string module object, this function returns the string pointer
  * and length of the string. The returned pointer and length should only
  * be used for read only accesses and never modified. */
-const char *RM_StringPtrLen(const RedisModuleString *str, size_t *len) {
+const char *RM_StringPtrLen(const RedisModuleString *str, size_t *len) { //获取字符串对象底层字符串的指针，同时获取字符串的长度
     if (str == NULL) {
         const char *errmsg = "(NULL string reply referenced in module)";
         if (len) *len = strlen(errmsg);
